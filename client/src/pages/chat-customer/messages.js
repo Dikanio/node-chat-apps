@@ -33,7 +33,7 @@ const Messages = ({ socket, selectedTicket }) => {
 
   return (
     <div className={styles.messagesColumn}>
-      <h1 style={{color: 'white'}}>{selectedTicket.username} - {selectedTicket.ticket}</h1>
+      <h1 style={{color: 'white'}}>{selectedTicket.agentName} - {selectedTicket.ticket}</h1>
       {selectedTicket && messagesRecieved.map((msg, i) => {
         return selectedTicket.ticket == msg.ticket ? (
           <div className={styles.message} key={i}>
