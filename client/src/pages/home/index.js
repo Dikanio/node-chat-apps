@@ -1,36 +1,46 @@
 import styles from './styles.module.css';
 import { useNavigate } from 'react-router-dom';
+import axios from '../../utils/axios';
+import { useEffect, useState } from 'react';
 
 export default function Home(props) {
-	const {username, setUsername, room, setRoom, socket} = props;
+	const {user, setUser, socket} = props;
+	const [users, setUsers] = useState([]);
+	const [userId, setUserId] = useState("");
 	const navigate = useNavigate();
-
-	const generateTicket = (length) => {
-		var result           = '';
-		var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-		var charactersLength = characters.length;
-		for ( var i = 0; i < length; i++ ) {
-			result += characters.charAt(Math.floor(Math.random() * charactersLength));
-		}
-		return result;
-	}
 	
 	const createTicket = () => {
-		if (username !== '') {
-			let ticket = `TICKET-${generateTicket(5)}`;
-			socket.emit('create_ticket', { username, ticket });
-			alert(`Nomor Tiket ${ticket} berhasil dibuat`);
-			navigate(`/chat-customer/${username}`, { replace: true });
+		if (userId !== '') {
+			let selectUser = users.find((value) => value.id == userId );
+			setUser(selectUser);
+			if (selectUser.role == 'customer') {
+				socket.emit('create_ticket', { customer_id: selectUser.id });
+			
+				navigate(`/chat-customer/${selectUser.name}`, { replace: true });
+			} else {
+				navigate(`/chat/${selectUser.name}`, { replace: true });
+			}
 		}
 	}
+
+	useEffect(() => {
+		axios.get('/users').then(response => {
+			setUsers(response.data)
+		})
+	}, [])
 
 	return (
 		<div className={styles.container} >
 			<div className={styles.formContainer}>
 				<h1>{`<>Ticket</>`}</h1>
-				<input onChange={(e) => setUsername(e.target.value)} className={styles.input} placeholder="Username..."></input>
+				<select onChange={(e) => setUserId(e.target.value)} className={styles.input}>
+					<option>--- Select User ---</option>
+					{users.map((data, key) => (
+						<option value={data.id} key={key}>{data.name}</option>
+					))}
+				</select>
 
-				<button onClick={createTicket} className="btn btn-secondary" style={{ width: '100%' }}>Create Ticket</button>
+				<button onClick={createTicket} className="btn btn-secondary" style={{ width: '100%' }}>Masuk</button>
 			</div>
 		</div>
 	)

@@ -2,21 +2,35 @@
 
 import styles from './styles.module.css';
 import { useState, useEffect } from 'react';
+import axios from '../../utils/axios'
 
 const Messages = ({ socket, selectedTicket }) => {
   const [messagesRecieved, setMessagesReceived] = useState([]);
 
   // Runs whenever a socket event is recieved from the server
   useEffect(() => {
+    axios.get('/chats/messages').then(response => {
+      let {data} = response
+      let mapped = data.map((value) => {
+        let map = {
+          id: value.id,
+          name: value.sender.name,
+          ticket_id: value.ticket_id,
+          message: value.message.body
+        }
+        return map;
+      })
+      setMessagesReceived(mapped)
+    })
     socket.on('receive_message', (data) => {
       console.log(data);
       setMessagesReceived((state) => [
         ...state,
         {
-          ticket: data.ticket,
-          message: data.message,
-          username: data.username,
-          __createdtime__: data.__createdtime__,
+          id: data.id,
+          name: data.sender.name,
+          ticket_id: data.ticket_id,
+          message: data.message.body
         },
       ]);
     });
@@ -33,15 +47,12 @@ const Messages = ({ socket, selectedTicket }) => {
 
   return (
     <div className={styles.messagesColumn}>
-      <h1 style={{color: 'white'}}>{selectedTicket.agentName} - {selectedTicket.ticket}</h1>
+      <h1 style={{color: 'white'}}>{selectedTicket.id}</h1>
       {selectedTicket && messagesRecieved.map((msg, i) => {
-        return selectedTicket.ticket == msg.ticket ? (
-          <div className={styles.message} key={i}>
+        return selectedTicket.id == msg.ticket_id ? (
+          <div className={styles.message} key={msg.id}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span className={styles.msgMeta}>{msg.username}</span>
-            <span className={styles.msgMeta}>
-              {formatDateFromTimestamp(msg.__createdtime__)}
-            </span>
+            <span className={styles.msgMeta}>{msg.name}</span>            
           </div>
           <p className={styles.msgText}>{msg.message}</p>
           <br />

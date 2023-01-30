@@ -2,26 +2,38 @@
 
 import styles from './styles.module.css';
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import axios from '../../utils/axios';
 
-const RoomAndUsers = ({ customerName, socket, setSelectedTicket }) => {
+const RoomAndUsers = ({ user, setUser, socket, setSelectedTicket }) => {
   const [tickets, setTickets] = useState([]);
 
   const navigate = useNavigate();
+  const { customerName } = useParams(); 
 
   useEffect(() => {
+    axios.get('/users').then(response => {
+      let find = response.data.find((value) => value.name == customerName)
+			setUser(find);
+      axios.get('/tickets').then(response => {
+        let {data} = response
+        let filtered = data.filter((value) => value.customer_id == find.id);
+        setTickets(filtered);
+      })
+		})
+    
     socket.on('list_ticket', (data) => {
-      let myTicket = data.filter((value) => value.username == customerName);
+      let myTicket = data.filter((value) => value.customer_id == user.id);
       setTickets(myTicket);
     });
 
     return () => socket.off('list_ticket');
-  }, [socket]);
+  }, []);
 
   return (
     
     <div className={styles.roomAndUsersColumn}>
-      <h2 className={styles.roomTitle}>{customerName}</h2>
+      <h2 className={styles.roomTitle}>{user.name}</h2>
       
       {/* <button className='btn btn-outline' onClick={takeTicket}>
         Dapatkan Chat
@@ -35,7 +47,7 @@ const RoomAndUsers = ({ customerName, socket, setSelectedTicket }) => {
               }}
               key={data.id}
             >
-              <button onClick={() => setSelectedTicket(data) }>{data.username} - {data.ticket}</button>
+              <button onClick={() => setSelectedTicket(data) }>{data.id}</button>
             </li>
           ))}
         </ul>

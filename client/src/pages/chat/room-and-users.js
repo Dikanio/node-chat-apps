@@ -2,20 +2,35 @@
 
 import styles from './styles.module.css';
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import axios from '../../utils/axios'
 
-const RoomAndUsers = ({ agentName, socket, setSelectedTicket}) => {
+const RoomAndUsers = ({ user, setUser, socket, setSelectedTicket}) => {
   const [openTickets, setOpenTickets] = useState([]);
   const [inProgressTickets, setInProgressTickets] = useState([]);
   const [doneTickets, setDoneTicket] = useState([]);
-  const [tab, setTab] = useState('open');
 
   const navigate = useNavigate();
+  const { agentName } = useParams();
 
   useEffect(() => {
+    axios.get('/users').then(response => {
+      let find = response.data.find((value) => value.name == agentName)
+			setUser(find);
+      axios.get('/tickets').then(response => {
+        let {data} = response
+        let open = data.filter((value) => value.status == 'open');
+        let inProgress = data.filter((value) => value.status == 'in_progress');
+        let done = data.filter((value) => value.status == 'done');
+        setOpenTickets(open);
+        setInProgressTickets(inProgress);
+        setDoneTicket(done);
+      })
+		})
+
     socket.on('list_ticket', (data) => {
       let open = data.filter((value) => value.status == 'open');
-      let inProgress = data.filter((value) => value.status == 'inprogress');
+      let inProgress = data.filter((value) => value.status == 'in_progress');
       let done = data.filter((value) => value.status == 'done');
       setOpenTickets(open);
       setInProgressTickets(inProgress);
@@ -27,12 +42,8 @@ const RoomAndUsers = ({ agentName, socket, setSelectedTicket}) => {
 
   const takeTicket = () => {
     if (openTickets.length > 0) {
-      
-      // const __createdtime__ = Date.now();
       let ticket = openTickets[0];
-      // console.log(ticket);
-      console.log(agentName);
-      socket.emit('take_ticket', {...ticket, agentName});
+      socket.emit('take_ticket', {ticket_id: ticket.id, agent_id: user.id});
     }
     
     // Redirect to home page
@@ -42,7 +53,7 @@ const RoomAndUsers = ({ agentName, socket, setSelectedTicket}) => {
   return (
     
     <div className={styles.roomAndUsersColumn}>
-      <h2 className={styles.roomTitle}>{agentName}</h2>
+      <h2 className={styles.roomTitle}>{user.name}</h2>
       
       <button className='btn btn-outline' onClick={takeTicket}>
         Dapatkan Chat
@@ -57,7 +68,7 @@ const RoomAndUsers = ({ agentName, socket, setSelectedTicket}) => {
               }}
               key={data.id}
             >
-              <button>{data.username} - {data.ticket}</button>
+              <button>{data.id}</button>
             </li>
           ))}
         </ul>
@@ -72,7 +83,7 @@ const RoomAndUsers = ({ agentName, socket, setSelectedTicket}) => {
               }}
               key={data.id}
             >
-              <button onClick={() => setSelectedTicket(data) }>{data.username} - {data.ticket}  - {data.agentName == agentName ? 'Saya' : 'Bukan Saya'}</button>
+              <button onClick={() => setSelectedTicket(data) }>{data.id}</button>
             </li>
           ))}
         </ul>
@@ -87,7 +98,7 @@ const RoomAndUsers = ({ agentName, socket, setSelectedTicket}) => {
               }}
               key={data.id}
             >
-              <button>{data.username} - {data.ticket}</button>
+              <button>{data.id}</button>
             </li>
           ))}
         </ul>

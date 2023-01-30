@@ -3,14 +3,13 @@
 import styles from './styles.module.css';
 import React, { useState } from 'react';
 
-const SendMessage = ({ socket, customerName, selectedTicket }) => {
+const SendMessage = ({ socket, user, selectedTicket }) => {
   const [message, setMessage] = useState('');
 
   const sendMessage = () => {
     if (message !== '') {
-      const __createdtime__ = Date.now();
       // Send message to server. We can't specify who we send the message to from the frontend. We can only send to server. Server can then send message to rest of users in room
-      socket.emit('send_message', { username: customerName, ticket: selectedTicket.ticket, message, __createdtime__ });
+      socket.emit('send_message', { ticket_id: selectedTicket.id, message, sender_id: user.id, sender_name: user.name, sender_role: user.role});
       setMessage('');
     }
   };
