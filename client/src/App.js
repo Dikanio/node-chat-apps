@@ -5,7 +5,27 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/home';
 import Chat from './pages/chat';
 
-const socket = io.connect('http://localhost:4100')
+const socket = io.connect('wss://dev-chat-api.lifepack.id', {
+  // transports: ['polling'],
+  secure: true,
+})
+
+// server-side
+socket.on("connection", (socket) => {
+  console.log('connection')
+  console.log(socket); // x8WIv7-mJelg7on_ALbx
+});
+
+// client-side
+socket.on("connect", () => {
+  console.log('connect')
+  console.log(socket); // x8WIv7-mJelg7on_ALbx
+});
+
+socket.on("disconnect", () => {
+  console.log('disconnect')
+  console.log(socket); // undefined
+});
 
 function App() {
   const [username, setUsername] = useState('');
